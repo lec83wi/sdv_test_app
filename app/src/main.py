@@ -115,7 +115,7 @@ class SampleApp(VehicleApp):
 
 async def main():
     """Main function"""
-    logger.info("Starting SampleApp...")
+    logger.info("Starting SampleApp v0.0.0...")
     # Constructing SampleApp and running it.
     vehicle_app = SampleApp(vehicle)
     await vehicle_app.run()

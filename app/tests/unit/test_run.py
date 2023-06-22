@@ -12,34 +12,61 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-# skip B101
-
 from unittest import mock
 
 import pytest
-from google.protobuf.timestamp_pb2 import Timestamp
-from sdv.vdb.types import TypedDataPointResult
-from sdv.vehicle_app import VehicleApp
-from vehicle import vehicle  # type: ignore
+from sdv_model.Cabin.SeatService import SeatService  # type: ignore
+from sdv_model.proto.seats_pb2 import BASE, SeatLocation  # type: ignore
 
-MOCKED_SPEED = 0.0
+from sdv.vehicle_app import VehicleApp
 
 
 @pytest.mark.asyncio
-async def test_for_get_speed():
-    result = TypedDataPointResult("foo", MOCKED_SPEED, Timestamp(seconds=10, nanos=0))
-
+async def test_for_seats_movecomponent():
     with mock.patch.object(
-        vehicle.Speed,
-        "get",
+        SeatService,
+        "MoveComponent",
         new_callable=mock.AsyncMock,
-        return_value=result,
+        return_value=get_sample_request_data(),
     ):
-        current_speed = (await vehicle.Speed.get()).value
-        print(f"Received speed: {current_speed}")
-        # Uncomment to test the behaviour of the SampleApp as provided by
-        #     the template repository:
-        # assert current_speed == MOCKED_SPEED
+        location = SeatLocation(row=1, index=1)
+        get_position = get_sample_request_data()
+        response = await SeatService.MoveComponent(
+            location, BASE, get_position["position"]  # type: ignore
+        )
+        assert response == get_sample_request_data()
+
+
+@pytest.mark.asyncio
+async def test_for_seats_movecomponent_set_high_position():
+    with mock.patch.object(
+        SeatService,
+        "MoveComponent",
+        new_callable=mock.AsyncMock,
+        return_value=get_error_invalid_arg_response(),
+    ):
+        location = SeatLocation(row=1, index=1)
+        set_position = set_seat_position_high()
+        response = await SeatService.MoveComponent(
+            location, BASE, set_position["position"]  # type: ignore
+        )
+        assert response == get_error_invalid_arg_response()
+
+
+@pytest.mark.asyncio
+async def test_for_seats_movecomponent_error_path():
+    with mock.patch.object(
+        SeatService,
+        "MoveComponent",
+        new_callable=mock.AsyncMock,
+        return_value=get_error_response(),
+    ):
+        location = SeatLocation(row=1, index=1)
+        get_position = get_sample_request_data()
+        response = await SeatService.MoveComponent(
+            location, BASE, get_position["position"]  # type: ignore
+        )
+        assert response == get_error_response()
 
 
 @pytest.mark.asyncio
@@ -48,18 +75,43 @@ async def test_for_publish_to_topic():
         VehicleApp, "publish_mqtt_event", new_callable=mock.AsyncMock, return_value=-1
     ):
         response = await VehicleApp.publish_mqtt_event(
-            str("sampleTopic"), get_sample_response_data()  # type: ignore
+            str("sampleTopic"), get_sample_request_data()  # type: ignore
         )
-
-        print(f"Received response: {response}")
-        # Uncomment to test the behaviour of the SampleApp as provided by
-        #     the template repository:
-        # assert response == -1
+        assert response == -1
 
 
-def get_sample_response_data():
-    return {
-        "result": {
-            "message": f"""Current Speed = {MOCKED_SPEED}""",
-        },
+def get_sample_request_data():
+    return {"position": 330, "requestId": "123456789"}
+
+
+def set_seat_position_high():
+    return {"position": 1001, "requestId": "123456789"}
+
+
+def get_error_invalid_arg_response():
+    data = set_seat_position_high()
+    error_msg = f"""Provided position {data["position"]}  \
+        should not be Greater than 1000 (Max)"""
+    resp_data = {
+        "requestId": data["requestId"],
+        "result": {"status": 1, "message": error_msg},
     }
+    return resp_data
+
+
+def get_sample_response():
+    get_position = get_sample_request_data()
+    resp_data = {
+        "requestId": {"requestId": get_position["position"], "result": {"status": 0}}
+    }
+    return resp_data
+
+
+def get_error_response():
+    data = get_sample_request_data()
+    error_msg = "Received unknown RPC error"
+    resp_data = {
+        "requestId": data["requestId"],
+        "result": {"status": 1, "message": error_msg},
+    }
+    return resp_data

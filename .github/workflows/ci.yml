@@ -147,18 +147,10 @@ jobs:
       platform: amd64
       deployment-matrix-str: ${{ needs.initialize-matrix.outputs.deployment-matrix }}
 
-  build-image-arm64:
-    uses: ./.github/workflows/build-docker-image.yml
-    needs: [initialize-matrix]
-    with:
-      platform: arm64
-      deployment-matrix-str: ${{ needs.initialize-matrix.outputs.deployment-matrix }}
-
-
   run-integration-tests:
     name: Run Integration Tests (${{ matrix.component.name }})
     runs-on: ubuntu-22.04
-    needs: [initialize-matrix, build-image-amd64, build-image-arm64]
+    needs: [initialize-matrix, build-image-amd64]
     strategy:
       matrix:
         component: ${{ fromJson(needs.initialize-matrix.outputs.deployment-matrix) }}

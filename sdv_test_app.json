@@ -1,6 +1,6 @@
 {
-    "id": "",
-    "name": "myapp-example",
+    "id": "sdv_test_app",
+    "name": "sdv_test_app",
     "image": {
         "name": "ghcr.io/lec83wi/sdv_test_app/sampleapp:test-release",
         "decrypt_config": null

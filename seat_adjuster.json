@@ -1,8 +1,8 @@
 {
-    "id": "sdv_test_app",
-    "name": "sdv_test_app",
+    "id": "seat_adjuster",
+    "name": "seat_adjuster",
     "image": {
-        "name": "ghcr.io/lec83wi/sdv_test_app/sampleapp:test-release",
+        "name": "ghcr.io/lec83wi/sdv_test_app/seatadjuster:0.0.0",
         "decrypt_config": null
     },
     "host_name": "",
@@ -22,7 +22,11 @@
             "type": "unless-stopped"
         },
         "runtime": "io.containerd.runc.v2",
-        "extra_hosts": [],
+        "extra_hosts": [
+            "databroker:container_databroker-host",
+            "mosquitto:host_ip",
+            "seatservice-example:container_seatservice-example-host"
+        ],
         "port_mappings": [
             {
               "protocol": "tcp",
@@ -56,10 +60,11 @@
     },
     "config": {
         "env": [
-           "VEHICLEDATABROKER_DAPR_APP_ID=vehicledatabroker",
+           "SDV_SEATSERVICE_ADDRESS=grpc://seatservice-example:50051",
            "SDV_MQTT_ADDRESS=mqtt://mosquitto:1883",
            "SDV_VEHICLEDATABROKER_ADDRESS=grpc://databroker:55555",
-           "SDV_MIDDLEWARE_TYPE=native"
+           "SDV_MIDDLEWARE_TYPE=native",
+           "VEHICLEDATABROKER_DAPR_APP_ID=vehicledatabroker"
         ],
         "cmd": []
     },
@@ -82,3 +87,4 @@
     "manually_stopped": false,
     "restart_count": 0
 }
+
